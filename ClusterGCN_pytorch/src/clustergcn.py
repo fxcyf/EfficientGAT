@@ -82,13 +82,13 @@ class ClusterGCNTrainer(object):
         epochs = trange(self.args.epochs, desc = "Train Loss")      # 进度条
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=self.args.learning_rate)
         self.model.train()      
-        for epoch in epochs:        # go through every clusters per epoch
+        for epoch in epochs:        # go through every cluster per epoch
             random.shuffle(self.clustering_machine.clusters)
             self.node_count_seen = 0
             self.accumulated_training_loss = 0
             for cluster in self.clustering_machine.clusters:
                 self.optimizer.zero_grad()      # set all parameters to zeros
-                batch_average_loss, node_count = self.do_forward_pass(cluster)
+                batch_average_loss, node_count = self.do_forward_pass(cluster)  # mind this, we may use more than one cluster
                 batch_average_loss.backward()
                 self.optimizer.step()
                 average_loss = self.update_average_loss(batch_average_loss, node_count)

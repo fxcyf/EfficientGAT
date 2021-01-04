@@ -31,13 +31,13 @@ def feature_reader(path):
     :param path: Path to the csv file.
     :return features: Dense matrix of features.
     """
-    features = pd.read_csv(path)
+    features = pd.read_csv(path)    # index and feature_id begins with 0
     node_index = features["node_id"].values.tolist()
     feature_index = features["feature_id"].values.tolist()
     feature_values = features["value"].values.tolist()
-    node_count = max(node_index)+1
-    feature_count = max(feature_index)+1
-    features = coo_matrix((feature_values, (node_index, feature_index)), shape=(node_count, feature_count)).toarray()
+    node_count = max(node_index)+1              # 1,2,3... + 0
+    feature_count = max(feature_index)+1        # 1,2,3... + 0
+    features = coo_matrix((feature_values, (node_index, feature_index)), shape=(node_count, feature_count)).toarray()   # feature in [N,C]
     return features
 
 def target_reader(path):
