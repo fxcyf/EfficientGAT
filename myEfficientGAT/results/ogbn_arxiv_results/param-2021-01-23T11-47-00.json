@@ -1,0 +1,1 @@
+{dropout": 0, "lr": 0.001, "cluster_number": 200, "cluster_batch": 5, "hidden": 8, "nb_heads": 4, "patience": 100}

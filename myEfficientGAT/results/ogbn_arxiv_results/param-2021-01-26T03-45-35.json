@@ -1,0 +1,1 @@
+{"acc": 0.5679896302697365, "F-1 score": 0.5679896302697365, "epochs": 10000, "dropout": 0, "lr": 0.002, "cluster_number": 300, "cluster_batch": 3, "hidden": 40, "nb_heads": 4, "patience": 200}

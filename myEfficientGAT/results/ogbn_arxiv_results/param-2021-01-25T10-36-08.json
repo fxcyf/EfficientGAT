@@ -1,0 +1,1 @@
+{"acc": 0.5480525893463366, "F-1 score": 0.5480525893463366,"Train Loss": 2.3312, "Valid Loss": 1.0143, "Valid ACC": 0.4794, "epochs": 565, "dropout": 0.1, "lr": 0.002, "cluster_number": 200, "cluster_batch": 3, "hidden": 8, "nb_heads": 4, "patience": 150}
