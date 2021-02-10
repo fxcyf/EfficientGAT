@@ -4,7 +4,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 
-class GraphAttentionLayer(nn.Module):
+class LinearAttention(nn.Module):
     """
     Simple GAT layer, using linear attention
     """
