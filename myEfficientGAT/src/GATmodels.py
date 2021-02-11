@@ -2,11 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from LinearAttentionLyr import LinearAttention
-<<<<<<< HEAD
-from slim_performer.pytorch.slim_performer_model import MultiHeadAttention as slim_performer_attention
-=======
-from slim_performer import MultiHeadAttention
->>>>>>> 0b5d12c204eada7cae118a7e071fb639e13fafc9
+from slim_performer_model import MultiHeadAttention
 
 class GAT(nn.Module):
     def __init__(self, feature_type, compute_type, nfeat, nhid, nclass, nheads):
@@ -17,13 +13,7 @@ class GAT(nn.Module):
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.dropout = dropout
 
-<<<<<<< HEAD
-        self.attentions = [LinearAttention(nfeat, nhid, dropout=dropout, concat=True) for _ in range(nheads)]
-        # self.attentions = [slim_performer_attention(nfeat, nhid, dropout=dropout, concat=True) for _ in range(nheads)]
-
-=======
         # self.attentions = [LinearAttention(nfeat, nhid, dropout=dropout, concat=True) for _ in range(nheads)]
->>>>>>> 0b5d12c204eada7cae118a7e071fb639e13fafc9
         # self.attentions: [(N,nhid) * nheads]
         # for i, attention in enumerate(self.attentions):
         #     self.add_module('attention_{}'.format(i), attention)
@@ -31,12 +21,7 @@ class GAT(nn.Module):
         self.add_model('attention',self.attention)
 
         # self.out_att = [LinearAttention(nhid * nheads, nclass, dropout=dropout, concat=False) for _ in range(nheads)]
-<<<<<<< HEAD
-        self.out_att = [slim_performer_attention(feature_type='',nhid * nheads, nclass, dropout=dropout, concat=False) for _ in range(nheads)]
-
-=======
         self.out_att = [MultiHeadAttention(feature_type, 1, nhid*nheads, nclass, compute_type) for _ in range(nheads)]      # nhid = nheads * head_dim
->>>>>>> 0b5d12c204eada7cae118a7e071fb639e13fafc9
         for i, out_att in enumerate(self.out_att):
             self.add_module('out_att_{}'.format(i), out_att)
 
