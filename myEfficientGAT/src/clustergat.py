@@ -3,8 +3,6 @@ import torch
 import random
 import numpy as np
 from tqdm import trange, tqdm  # 进度条
-from layers import StackedGCN
-from torch.autograd import Variable
 from sklearn.metrics import f1_score
 from sklearn.metrics import accuracy_score
 from GATmodels import GAT
@@ -206,8 +204,8 @@ class ClusterGATTrainer(object):
         score = f1_score(self.targets, self.predictions, average="micro")
         acc = accuracy_score(self.targets, self.predictions)
         iso_date = datetime.now().isoformat().replace(':', '-')[:-7]
-        np.savetxt('../input/ogbn_arxiv/results/targets-{}.txt'.format(iso_date), self.targets)
-        np.savetxt('../input/ogbn_arxiv/results/predictions-{}.txt'.format(iso_date), self.predictions)
+        np.savetxt('../results/ogbn_arxiv_results/targets-{}.txt'.format(iso_date), self.targets)
+        np.savetxt('../results/ogbn_arxiv_results/predictions-{}.txt'.format(iso_date), self.predictions)
         param = {'acc': acc,
                  'F-1 score': score,
                  'epochs': self.args.epochs,
@@ -218,9 +216,8 @@ class ClusterGATTrainer(object):
                  'hidden': self.args.hidden,
                  'nb_heads': self.args.nb_heads,
                  'patience': self.args.patience}
-        with open('../input/ogbn_arxiv/results/param-{}.json'.format(iso_date), 'w') as f:
+        with open('./results/ogbn_arxiv_results/param-{}.json'.format(iso_date), 'w') as f:
             json.dump(param, f)
         # ../input/ogbn_arxiv/results/targets.txt; ../input/results/targets.txt
         # ../input/ogbn_arxiv/results/predictions.txt; ../input/results/predictions.txt
-        print("\nF-1 score: {:.4f}".format(score))
         print("\nAccuracy: {:.4f}".format(acc))
