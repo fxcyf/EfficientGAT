@@ -29,7 +29,8 @@ class ClusterGATTrainer(object):
         #     """
         #     Creating a StackedGCN and transferring to CPU/GPU.
         #     """
-        self.model = GAT(self.clustering_machine.feature_count,
+        self.model = GAT(args.feature_type, args.compute_type, 
+                         self.clustering_machine.feature_count,
                          self.args.hidden,
                          self.clustering_machine.class_count,
                          self.args.dropout,
@@ -39,7 +40,7 @@ class ClusterGATTrainer(object):
     def do_forward_pass(self, epoch, clusters):
         """
         Making a forward pass with data from a given partition.
-        :param cluster: Cluster index.
+        :param clusters: list of Cluster index.
         :return average_loss: Average loss on the cluster.
         :return node_count: Number of nodes.
         """
@@ -48,7 +49,7 @@ class ClusterGATTrainer(object):
         train_nodes = torch.LongTensor()
         features = torch.LongTensor()
         target = torch.LongTensor()
-        for cluster in clusters:
+        for cluster in clusters:    # concat features and targets of clusters
             edges = torch.cat((edges, self.clustering_machine.sg_edges[cluster]), 1)
             macro_nodes = torch.cat((macro_nodes, self.clustering_machine.sg_nodes[cluster]), 0)
             train_nodes = torch.cat((train_nodes, self.clustering_machine.sg_train_nodes[cluster]), 0)

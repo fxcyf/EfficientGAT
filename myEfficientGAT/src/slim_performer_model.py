@@ -333,8 +333,9 @@ class SLiMPerformerLayer(torch.nn.Module):
 class MultiHeadAttention(torch.nn.Module):
   """Explicit multihead attention using prefix sum."""
 
-  def __init__(self, feature_type, n_heads, hidden_dim, compute_type):
-
+  def __init__(self, feature_type, n_heads, feat_dim, hidden_dim, compute_type):
+    assert valid_feature_type(feature_type)
+    assert compute_type in ['ps', 'iter', 'parallel_ps']
     super(MultiHeadAttention, self).__init__()
 
     self._feature_type = feature_type
@@ -342,9 +343,9 @@ class MultiHeadAttention(torch.nn.Module):
     self._hidden_dim = hidden_dim
     self._compute_type = compute_type
 
-    self.q_map = torch.nn.Linear(hidden_dim, hidden_dim)
-    self.k_map = torch.nn.Linear(hidden_dim, hidden_dim)
-    self.v_map = torch.nn.Linear(hidden_dim, hidden_dim)
+    self.q_map = torch.nn.Linear(feat_dim, hidden_dim)
+    self.k_map = torch.nn.Linear(feat_dim, hidden_dim)
+    self.v_map = torch.nn.Linear(feat_dim, hidden_dim)
 
   def full_forward(self, x, rfs):
 
@@ -366,7 +367,7 @@ class MultiHeadAttention(torch.nn.Module):
     den = torch.transpose(den, 0, 1)
 
     outputs = num / (den[Ellipsis, None] + 1e-16)
-    outputs = outputs.reshape(x.shape)
+    outputs = outputs.reshape(x.shape[0],x._hidden_dim)
 
     return outputs
 
@@ -440,10 +441,10 @@ class MultiHeadAttention(torch.nn.Module):
     values = self.v_map(inputs)
 
     queries = queries.reshape(
-        [queries.shape[0], queries.shape[1], self._n_heads, -1])
+      [queries.shape[0], queries.shape[1], self._n_heads, -1])
     keys = keys.reshape([keys.shape[0], keys.shape[1], self._n_heads, -1])
     values = values.reshape(
-        [values.shape[0], values.shape[1], self._n_heads, -1])
+      [values.shape[0], values.shape[1], self._n_heads, -1])
 
     if self._feature_type == 'relu':
       queries = torch.nn.functional.relu(queries)

@@ -36,6 +36,11 @@ def main():
     parser.add_argument('--hidden', type=int, default=40, help='Number of hidden units.')
     parser.add_argument('--nb_heads', type=int, default=4, help='Number of head attentions.')
     parser.add_argument('--patience', type=int, default=200, help='Patience')
+    parser.add_argument('--feature_type', nargs="?", default='sqr', help='Nonlinearity function for feature. Can be relu, elu+1, sqr, favor+, or favor+{int}.')
+    parser.add_argument('--compute_type', nargs="?", default='iter', help="Which type of method to compute: "
+                                                                    "iter = iterative algorithm from Appendix B, ps = implementation using torch.cumsum, parallel_ps = implementation using custom log prefix sum implementation.")
+
+
 
     args = parser.parse_args()  # args = parser.parse_args()
 
