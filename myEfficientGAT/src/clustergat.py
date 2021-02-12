@@ -12,7 +12,7 @@ from pytorchtools import EarlyStopping
 
 class ClusterGATTrainer(object):
     """
-    Training a ClusterGCN.
+    Training a ClusterGAT.
     """
 
     def __init__(self, args, clustering_machine):
@@ -29,11 +29,10 @@ class ClusterGATTrainer(object):
         #     """
         #     Creating a StackedGCN and transferring to CPU/GPU.
         #     """
-        self.model = GAT(args.feature_type, args.compute_type, 
+        self.model = GAT(args.feature_type, args.compute_type,
                          self.clustering_machine.feature_count,
                          self.args.hidden,
                          self.clustering_machine.class_count,
-                         self.args.dropout,
                          self.args.nb_heads)
         self.model = self.model.to(self.device)  # self.model.layers <-- torch.nn.Module + self define modules
 

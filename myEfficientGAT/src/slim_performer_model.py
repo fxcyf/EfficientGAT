@@ -18,7 +18,7 @@
 import numpy as np
 import torch
 
-import performer.models.pytorch.slim_performer.numerator_and_denominator as num_and_den
+import numerator_and_denominator as num_and_den
 
 
 def valid_feature_type(feature_type):
@@ -333,7 +333,7 @@ class SLiMPerformerLayer(torch.nn.Module):
 class MultiHeadAttention(torch.nn.Module):
   """Explicit multihead attention using prefix sum."""
 
-  def __init__(self, feature_type, n_heads, feat_dim, hidden_dim, compute_type):
+  def __init__(self, feature_type, n_heads, hidden_dim, compute_type):
     assert valid_feature_type(feature_type)
     assert compute_type in ['ps', 'iter', 'parallel_ps']
     super(MultiHeadAttention, self).__init__()
@@ -343,12 +343,11 @@ class MultiHeadAttention(torch.nn.Module):
     self._hidden_dim = hidden_dim
     self._compute_type = compute_type
 
-    self.q_map = torch.nn.Linear(feat_dim, hidden_dim)
-    self.k_map = torch.nn.Linear(feat_dim, hidden_dim)
-    self.v_map = torch.nn.Linear(feat_dim, hidden_dim)
+    self.q_map = torch.nn.Linear(hidden_dim, hidden_dim)
+    self.k_map = torch.nn.Linear(hidden_dim, hidden_dim)
+    self.v_map = torch.nn.Linear(hidden_dim, hidden_dim)
 
   def full_forward(self, x, rfs):
-
     queries, keys, values = self._get_queries_keys_values(x, rfs)
 
     num_sums, den_sums = self.init_sums(x.device)
@@ -435,16 +434,17 @@ class MultiHeadAttention(torch.nn.Module):
     return outputs, init_num_sums, init_den_sums, num_sums, den_sums
 
   def _get_queries_keys_values(self, inputs, rfs):
-
+    print('input:',inputs.shape)
     queries = self.q_map(inputs)
     keys = self.k_map(inputs)
     values = self.v_map(inputs)
-
+    print('queries:',queries.shape)
     queries = queries.reshape(
       [queries.shape[0], queries.shape[1], self._n_heads, -1])
     keys = keys.reshape([keys.shape[0], keys.shape[1], self._n_heads, -1])
     values = values.reshape(
       [values.shape[0], values.shape[1], self._n_heads, -1])
+
 
     if self._feature_type == 'relu':
       queries = torch.nn.functional.relu(queries)
