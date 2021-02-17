@@ -7,6 +7,7 @@ from torch.autograd import Variable
 from sklearn.metrics import f1_score
 from sklearn.metrics import accuracy_score
 
+
 class ClusterGCNTrainer(object):
     """
     Training a ClusterGCN.

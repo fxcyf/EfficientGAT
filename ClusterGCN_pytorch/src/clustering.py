@@ -1,4 +1,4 @@
-import pymetis
+import metis
 import torch
 import random
 import numpy as np
@@ -53,7 +53,7 @@ class ClusteringMachine(object):
         """
         Clustering the graph with Metis. For details see:
         """
-        (st, parts) = pymetis.part_graph(self.args.cluster_number, self.graph)
+        (st, parts) = metis.part_graph(self.graph, self.args.cluster_number)
         self.clusters = list(set(parts))
         self.cluster_membership = {node: membership for node, membership in enumerate(parts)}
 
