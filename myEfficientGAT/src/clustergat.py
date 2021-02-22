@@ -3,14 +3,13 @@ import torch
 import random
 import numpy as np
 from tqdm import trange, tqdm  # 进度条
-from layers import StackedGCN
 from torch.autograd import Variable
 from sklearn.metrics import f1_score
 from sklearn.metrics import accuracy_score
 from GATmodels import GAT
 import json
 from pytorchtools import EarlyStopping
-
+import torch.nn.functional as F
 
 class ClusterGATTrainer(object):
     """
@@ -45,32 +44,42 @@ class ClusterGATTrainer(object):
         :return average_loss: Average loss on the cluster.
         :return node_count: Number of nodes.
         """
-        edges = torch.LongTensor()
+        # edges = torch.LongTensor()
         macro_nodes = torch.LongTensor()
         train_nodes = torch.LongTensor()
         features = torch.LongTensor()
         target = torch.LongTensor()
         for cluster in clusters:
-            edges = torch.cat((edges, self.clustering_machine.sg_edges[cluster]), 1)
+            # edges = torch.cat((edges, self.clustering_machine.sg_edges[cluster]), 1)
             macro_nodes = torch.cat((macro_nodes, self.clustering_machine.sg_nodes[cluster]), 0)
             train_nodes = torch.cat((train_nodes, self.clustering_machine.sg_train_nodes[cluster]), 0)
             features = torch.cat((features, self.clustering_machine.sg_features[cluster]), 0)
             # print(features.shape)
             target = torch.cat((target, self.clustering_machine.sg_targets[cluster]), 0)
-        edges = edges.to(self.device)
+        # edges = edges.to(self.device)
         macro_nodes = macro_nodes.to(self.device)
         train_nodes = train_nodes.to(self.device)
         features = features.to(self.device)
         target = target.to(self.device).squeeze()
-        # print(train_nodes.shape,'\n',features.shape,'\n',target.shape)
         predictions = self.model(features)  # predictions in [N,out_channels]
+        if self.args.multilabel:
+            predictions = torch.sigmoid(predictions)
+            loss = torch.nn.BCELoss()
+            print(predictions[train_nodes])
+            print(target[train_nodes])
+            average_loss = loss(predictions[train_nodes], target[train_nodes])
+            print("average loss:", average_loss)
+        else:
+            predictions = F.log_softmax(predictions, dim=1)
+            # print(predictions[1,:])
+            # print(target[1,:])
+            average_loss = torch.nn.functional.nll_loss(predictions[train_nodes], target[train_nodes])
+            # The negative log likelihood loss: nll_loss(input--(N,C),targer--(N))
         # np.savetxt('../input/ogbn_arxiv/results/targets-{}-{}.txt'.format(epoch, clusters[0]),
         #            target.cpu().detach().numpy())
         # np.savetxt('../input/ogbn_arxiv/results/predictions-{}-{}.txt'.format(epoch, clusters[0]),
         #            predictions.cpu().detach().numpy())
         # print('target: ',target,'\n','pred: ',predictions)
-        average_loss = torch.nn.functional.nll_loss(predictions[train_nodes], target[
-            train_nodes])  # The negative log likelihood loss: nll_loss(input--(N,C),targer--(N))
         node_count = train_nodes.shape[0]
         return average_loss, node_count
 
@@ -104,7 +113,7 @@ class ClusterGATTrainer(object):
         :return prediction: Prediction matrix with probabilities.
         :return target: Target vector.
         """
-        edges = self.clustering_machine.sg_edges[cluster].to(self.device)
+        # edges = self.clustering_machine.sg_edges[cluster].to(self.device)
         macro_nodes = self.clustering_machine.sg_nodes[cluster].to(self.device)
         test_nodes = self.clustering_machine.sg_test_nodes[cluster].to(self.device)
         features = self.clustering_machine.sg_features[cluster].to(self.device)
@@ -112,6 +121,10 @@ class ClusterGATTrainer(object):
         target = target[test_nodes]
         prediction = self.model(features)
         prediction = prediction[test_nodes, :]
+        if self.args.multilabel:
+            prediction = torch.sigmoid(prediction)
+        else:
+            prediction = F.log_softmax(prediction, dim=1)
         return prediction, target
 
     def do_validation(self, cluster):
@@ -121,17 +134,25 @@ class ClusterGATTrainer(object):
         :return prediction: Prediction matrix with probabilities.
         :return target: Target vector.
         """
-        edges = self.clustering_machine.sg_edges[cluster].to(self.device)
+        # edges = self.clustering_machine.sg_edges[cluster].to(self.device)
         macro_nodes = self.clustering_machine.sg_nodes[cluster].to(self.device)
         valid_nodes = self.clustering_machine.sg_valid_nodes[cluster].to(self.device)
         features = self.clustering_machine.sg_features[cluster].to(self.device)
         target = self.clustering_machine.sg_targets[cluster].to(self.device).squeeze()
         prediction = self.model(features)
-        average_loss = torch.nn.functional.nll_loss(prediction[valid_nodes], target[
-            valid_nodes])  # The negative log likelihood loss: nll_loss(input--(N,C),targer--(N))
+        target = target[valid_nodes]
+        prediction = prediction[valid_nodes]
+        if self.args.multilabel:
+            prediction = torch.sigmoid(prediction)
+            loss = torch.nn.BCELoss()
+            average_loss = loss(prediction, target)
+        else:
+            prediction = F.log_softmax(prediction, dim=1)
+            average_loss = torch.nn.functional.nll_loss(prediction, target)
+            # The negative log likelihood loss: nll_loss(input--(N,C),targer--(N))
         # acc = accuracy_score(target[valid_nodes].cpu().detach().numpy(),prediction[valid_nodes].cpu().detach().numpy().argmax(1))
         node_count = valid_nodes.shape[0]
-        return average_loss, node_count, prediction[valid_nodes], target[valid_nodes]
+        return average_loss, node_count, prediction, target
 
     def train(self):
         """
@@ -154,13 +175,13 @@ class ClusterGATTrainer(object):
             for i in range(batch_num):
                 # for cluster in self.clustering_machine.clusters:
                 clusters = self.clustering_machine.clusters[cluster_batch * i:cluster_batch * (i + 1)]
-                # print(clusters)
-                self.optimizer.zero_grad()  # set all parameters to zeros
-                batch_average_loss, node_count = self.do_forward_pass(epoch,
-                                                                      clusters)  # mind this, we may use more than one cluster
-                batch_average_loss.backward()
-                self.optimizer.step()
-                average_train_loss = self.update_average_loss(batch_average_loss, node_count)
+                if sum([self.clustering_machine.sg_train_nodes[x].shape[0] for x in clusters]) > 0:
+                    self.optimizer.zero_grad()  # set all parameters to zeros
+                    batch_average_loss, node_count = self.do_forward_pass(epoch, clusters)
+                    # mind this, we may use more than one cluster
+                    batch_average_loss.backward()
+                    self.optimizer.step()
+                    average_train_loss = self.update_average_loss(batch_average_loss, node_count)
             train_loss.append(average_train_loss)
             # validation for early stopping
             self.model.eval()
@@ -169,24 +190,31 @@ class ClusterGATTrainer(object):
             self.valid_node_count_seen = 0
             self.accumulated_valid_loss = 0
             for cluster in self.clustering_machine.clusters:
-                batch_average_loss, node_count, prediction, target = self.do_validation(cluster)
-                average_valid_loss = self.update_average_loss(batch_average_loss, node_count, torv='valid')
-                predictions.append(prediction.cpu().detach().numpy())
-                targets.append(target.cpu().detach().numpy())
+                if self.clustering_machine.sg_valid_nodes[cluster].shape[0] > 0:
+                    batch_average_loss, node_count, prediction, target = self.do_validation(cluster)
+                    # prediction after sigmoid or log_softmax
+                    average_valid_loss = self.update_average_loss(batch_average_loss, node_count, torv='valid')
+                    predictions.append(prediction.cpu().detach().numpy())
+                    targets.append(target.cpu().detach().numpy())
             valid_loss.append(average_valid_loss)
             targets = np.concatenate(targets)
-            predictions = np.concatenate(predictions).argmax(1)
-            valid_acc = accuracy_score(targets, predictions)
+            predictions = np.concatenate(predictions)
+            if not self.args.multilabel:
+                predictions = predictions.argmax(1)
+                valid_F1 = f1_score(targets, predictions, average="micro")
+            else:
+                # print(predictions[1, :])
+                # print(target[1, :])
+                valid_F1 = f1_score(targets > 0.5, predictions > 0.5, average='micro')
             # average_valid_acc = self.update_average_loss(valid_acc,node_count, torv = 'valid',lossoracc='acc')
             # update valid acc but dont update valid node seen
 
-            epochs.set_description("Train Loss: {}, Valid Loss: {}, Valid ACC: {}"
+            epochs.set_description("Train Loss: {}, Valid Loss: {}, Valid F1: {}"
                                    .format(round(average_train_loss, 4), round(average_valid_loss, 4),
-                                           round(valid_acc, 4)))
+                                           round(valid_F1, 4)))
             earlystopping(average_valid_loss, self.model)
             if earlystopping.early_stop:
-                print("Early Stopping in epoch{}\n".format(epoch))
-
+                print("Early Stop\n")
                 break;
         self.model.load_state_dict(torch.load('checkpoint.pt'))
 
@@ -202,14 +230,17 @@ class ClusterGATTrainer(object):
             self.predictions.append(prediction.cpu().detach().numpy())
             self.targets.append(target.cpu().detach().numpy())
         self.targets = np.concatenate(self.targets)
-        self.predictions = np.concatenate(self.predictions).argmax(1)
-        score = f1_score(self.targets, self.predictions, average="micro")
-        acc = accuracy_score(self.targets, self.predictions)
+        self.predictions = np.concatenate(self.predictions)     # .argmax(1)
+        if self.args.multilabel:
+            # self.predictions = torch.sigmoid(self.predictions)
+            score = f1_score(self.targets > 0.5, self.predictions > 0.5, average='micro')
+        else:
+            self.predictions = self.predictions.argmax(1)
+            score = f1_score(self.targets, self.predictions, average="micro")
         iso_date = datetime.now().isoformat().replace(':', '-')[:-7]
-        np.savetxt('../input/ogbn_arxiv/results/targets-{}.txt'.format(iso_date), self.targets)
-        np.savetxt('../input/ogbn_arxiv/results/predictions-{}.txt'.format(iso_date), self.predictions)
-        param = {'acc': acc,
-                 'F-1 score': score,
+        np.savetxt(self.args.results_path+'targets-{}.txt'.format(iso_date), self.targets)
+        np.savetxt(self.args.results_path+'predictions-{}.txt'.format(iso_date), self.predictions)
+        param = {'F-1 score': score,
                  'epochs': self.args.epochs,
                  'dropout': self.args.dropout,
                  'lr': self.args.learning_rate,
@@ -218,9 +249,8 @@ class ClusterGATTrainer(object):
                  'hidden': self.args.hidden,
                  'nb_heads': self.args.nb_heads,
                  'patience': self.args.patience}
-        with open('../input/ogbn_arxiv/results/param-{}.json'.format(iso_date), 'w') as f:
+        with open(self.args.results_path+'param-{}.json'.format(iso_date), 'w') as f:
             json.dump(param, f)
         # ../input/ogbn_arxiv/results/targets.txt; ../input/results/targets.txt
         # ../input/ogbn_arxiv/results/predictions.txt; ../input/results/predictions.txt
         print("\nF-1 score: {:.4f}".format(score))
-        print("\nAccuracy: {:.4f}".format(acc))

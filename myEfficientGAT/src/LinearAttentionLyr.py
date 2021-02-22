@@ -10,7 +10,7 @@ class LinearAttention(nn.Module):
     """
 
     def __init__(self, in_features, out_features, dropout, concat=True):
-        super(GraphAttentionLayer, self).__init__()
+        super(LinearAttention, self).__init__()
         self.dropout = dropout
         self.in_features = in_features
         self.out_features = out_features
@@ -26,6 +26,7 @@ class LinearAttention(nn.Module):
         # nn.init.xavier_uniform_(self.a.data, gain=1.414)
 
     def forward(self, h):
+        # print(h.shape)
         WQ = torch.mm(h, self.W_Q)  # h.shape: (N, in_features), Wh.shape: (N, out_features)
         Q = F.elu(WQ) + 1
         WK = torch.mm(h, self.W_K)

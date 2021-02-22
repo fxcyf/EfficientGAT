@@ -38,8 +38,8 @@ class StackedGCN(torch.nn.Module):  # modify the model
         :return predictions: Prediction matrix output FLoatTensor.
         """
         for i, _ in enumerate(self.args.layers[:-2]):
-            features = torch.nn.functional.relu(self.layers[i](features,
-                                                               edges))  # relu(GCNConv(features,edges)); features in [N,in_channels], edges in [2,E]
+            features = torch.nn.functional.relu(self.layers[i](features, edges))
+            # relu(GCNConv(features,edges)); features in [N,in_channels], edges in [2,E]
             if i > 1:
                 features = torch.nn.functional.dropout(features, p=self.args.dropout, training=self.training)
                 # dropout: randomly set some elements of input as zero, with probability p using samples from a Bernoulli distribution. 

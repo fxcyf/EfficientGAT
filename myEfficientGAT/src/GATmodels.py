@@ -18,6 +18,11 @@ class GAT(nn.Module):
         for i, attention in enumerate(self.attentions):
             self.add_module('attention_{}'.format(i), attention)
 
+        # self.attentions_2nd = [LinearAttention(nhid*nheads, nhid, dropout=dropout, concat=True) for _ in range(nheads)]
+        # # self.attentions: [(N,nhid) * nheads]
+        # for i, attention in enumerate(self.attentions_2nd):
+        #     self.add_module('attention_2nd{}'.format(i), attention)
+
         self.out_att = [LinearAttention(nhid * nheads, nclass, dropout=dropout, concat=False) for _ in range(nheads)]
         for i, out_att in enumerate(self.out_att):
             self.add_module('out_att_{}'.format(i), out_att)
@@ -28,10 +33,13 @@ class GAT(nn.Module):
         x = F.dropout(x, self.dropout, training=self.training)
         # temp = torch.zeros(x.shape[0],self.nclass).to(self.device)
 
-        x = torch.cat([out_att(x).unsqueeze(-1) for out_att in self.out_att],dim=2).sum(dim=2)
+        # x = torch.cat([att(x) for att in self.attentions_2nd], dim=1)
+        # x = F.dropout(x, self.dropout, training=self.training)
+
+        x = torch.cat([out_att(x).unsqueeze(-1) for out_att in self.out_att], dim=2).sum(dim=2)
         x = x / self.nheads
-        x = F.elu(x)
-        return F.log_softmax(x, dim=1)
+        #x = F.elu(x)
+        return x    # F.log_softmax(x, dim=1)
 
 
 

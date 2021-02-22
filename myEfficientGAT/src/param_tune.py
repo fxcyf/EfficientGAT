@@ -1,5 +1,5 @@
 import numpy as np
-from main_arxiv import main
+from main_ogbn import main
 import random
 
 dropout = np.linspace(0.1,0.8,21)

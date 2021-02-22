@@ -21,6 +21,7 @@ def main():
     parser.add_argument("--edge-path", nargs="?", default="../input/ogbn_arxiv/raw/edge.csv", help="Edge list csv.")
     parser.add_argument("--type-map-path", nargs="?", default="../input/ogbn_arxiv/split/time/",
                         help="path to test.csv, train.csv,valid.csv.")
+    parser.add_argument("--result-path", nargs="?", default="../results/ogbn_arxiv_results/")
     parser.add_argument("--clustering-method", nargs="?", default="metis",
                         help="Clustering method for graph decomposition. Default is the metis procedure.")
     parser.add_argument("--epochs", type=int, default=200, help="Number of training epochs. Default is 200.")
