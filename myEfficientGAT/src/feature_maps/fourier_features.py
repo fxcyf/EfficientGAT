@@ -221,7 +221,7 @@ class GeneralizedRandomFeatures(RandomFourierFeatures):
         query_dimensions: int, The input query dimensions in order to sample
                           the noise matrix
         n_dims: int, The size of the feature map (default: query_dimensions)
-        softmax_temp: float, A normalizer for the dot products that is
+        softmax_temp: float, A normalizer for the dot ogbn_products-1 that is
                      multiplied to the input features before the feature map
                      application (default: 1.0)
         orthogonal: bool, If set to true then the random matrix should be
