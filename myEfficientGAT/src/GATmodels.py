@@ -23,7 +23,7 @@ class GAT(nn.Module):
         # for i, attention in enumerate(self.attentions_2nd):
         #     self.add_module('attention_2nd{}'.format(i), attention)
 
-        self.out_att = [LinearAttention(nhid * nheads, nclass, dropout=dropout, concat=False) for _ in range(nheads)]
+        self.out_att = [LinearAttention(nhid*nheads, nclass, dropout=dropout, concat=False) for _ in range(nheads)]
         for i, out_att in enumerate(self.out_att):
             self.add_module('out_att_{}'.format(i), out_att)
 
@@ -38,7 +38,7 @@ class GAT(nn.Module):
 
         x = torch.cat([out_att(x).unsqueeze(-1) for out_att in self.out_att], dim=2).sum(dim=2)
         x = x / self.nheads
-        #x = F.elu(x)
+        # x = F.elu(x)
         return x    # F.log_softmax(x, dim=1)
 
 

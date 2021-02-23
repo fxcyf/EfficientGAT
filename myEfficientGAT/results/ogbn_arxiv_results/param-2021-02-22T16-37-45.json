@@ -1,0 +1,1 @@
+{"F-1 score": 0.5487315597802604, "epochs": 10000, "dropout": 0, "lr": 0.001, "cluster_number": 200, "cluster_batch": 3, "hidden": 40, "nb_heads": 4, "patience": 200}

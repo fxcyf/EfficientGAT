@@ -105,4 +105,5 @@ def graphsage_data_reader(dataset_path, dataset_str):
         labels = np.zeros((num_data, 1), dtype=np.float32)
         for k in class_map.keys():
             labels[id_map[k], 1] = class_map[k]
+    print(type(labels))
     return graph_nx, labels, feats

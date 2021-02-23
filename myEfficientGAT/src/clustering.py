@@ -1,4 +1,5 @@
 import pymetis
+import metis
 import torch
 import random
 import numpy as np
@@ -13,7 +14,7 @@ class ClusteringMachine(object):
     Clustering the graph, feature set and target.
     """
 
-    def __init__(self, args, graph, features, target, type_map=None):
+    def __init__(self, args, graph,adj, features, target, type_map=None):
         """
         :param args: Arguments object with parameters.
         :param graph: Networkx Graph.
@@ -22,6 +23,7 @@ class ClusteringMachine(object):
         """
         self.args = args
         self.graph = graph  # nx.Graph
+        self.adj = adj
         self.features = features  # coo_matrix
         self.target = target  # np.array
         self.type_map = type_map  # dict
@@ -63,11 +65,13 @@ class ClusteringMachine(object):
         Clustering the graph with Metis. For details see:
         """
         if not os.path.exists(self.args.clustering_path + "clustering" + str(self.args.cluster_number) + ".npy"):
-            (st, parts) = pymetis.part_graph(self.args.cluster_number, self.graph)
+            (st, parts) = pymetis.part_graph(self.args.cluster_number, self.adj)
+            # (st, parts) = metis.part_graph(self.graph, self.args.cluster_number)
+
             parts = np.array(parts)
             np.save(self.args.clustering_path + "clustering" + str(self.args.cluster_number) + ".npy", parts)
         else:
-            print("found clustering file\n")
+            print("Found exsiting clustering file\n")
             parts = np.load(self.args.clustering_path + "clustering" + str(self.args.cluster_number) + ".npy")
             parts.tolist()
         print("no. of nodes: ", len(parts))

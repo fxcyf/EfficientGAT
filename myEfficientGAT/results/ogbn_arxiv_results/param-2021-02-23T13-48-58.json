@@ -1,0 +1,1 @@
+{"F-1 score": 0.5756846285208732,"Train Loss": 2.5016, "Valid Loss": 1.1074, "Valid F1": 0.5663, "epochs": 30, "dropout": 0, "lr": 0.001, "cluster_number": 2000, "cluster_batch": 3, "hidden": 40, "nb_heads": 4, "patience": 200}

@@ -63,12 +63,13 @@ class ClusterGATTrainer(object):
         target = target.to(self.device).squeeze()
         predictions = self.model(features)  # predictions in [N,out_channels]
         if self.args.multilabel:
-            predictions = torch.sigmoid(predictions)
-            loss = torch.nn.BCELoss()
+            # predictions = torch.sigmoid(predictions)
+            loss = torch.nn.BCEWithLogitsLoss()
             print(predictions[train_nodes])
-            print(target[train_nodes])
+            # print(target[train_nodes])
+            print(torch.equal(predictions[train_nodes], predictions[train_nodes][0, :].repeat(len(train_nodes))))
             average_loss = loss(predictions[train_nodes], target[train_nodes])
-            print("average loss:", average_loss)
+            # print("average loss:", average_loss)
         else:
             predictions = F.log_softmax(predictions, dim=1)
             # print(predictions[1,:])

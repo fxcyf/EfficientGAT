@@ -29,15 +29,15 @@ def main():
     parser.add_argument("--seed", type=int, default=5876, help="Random seed for train-test split. Default is 42.")
     parser.add_argument('--no_cuda', action='store_true', default=False, help='Use CUDA training.')  # 无需带参数
     parser.add_argument("--epochs", type=int, default=1000, help="Number of training epochs. Default is 200.")
-    parser.add_argument("--dropout", type=float, default=0.8, help="Dropout parameter. Default is 0.5.")
+    parser.add_argument("--dropout", type=float, default=0, help="Dropout parameter. Default is 0.5.")
     parser.add_argument("--learning-rate", type=float, default=0.001, help="Learning rate. Default is 0.01.")
     parser.add_argument("--test-ratio", type=float, default=0.1, help="Test data ratio. Default is 0.1.")
-    parser.add_argument("--cluster-number", type=int, default=2000, help="Number of clusters extracted. Default is 10.")
-    parser.add_argument("--cluster-batch", type=int, default=100,
+    parser.add_argument("--cluster-number", type=int, default=50, help="Number of clusters extracted. Default is 10.")
+    parser.add_argument("--cluster-batch", type=int, default=2,
                         help="number of clusters to form a batch. Default is one")
 
-    parser.add_argument('--hidden', type=int, default=50, help='Number of hidden units.')
-    parser.add_argument('--nb_heads', type=int, default=16, help='Number of head attentions.')
+    parser.add_argument('--hidden', type=int, default=512, help='Number of hidden units.')
+    parser.add_argument('--nb_heads', type=int, default=4, help='Number of head attentions.')
     parser.add_argument('--patience', type=int, default=50, help='Patience')
 
     args = parser.parse_args()  # args = parser.parse_args()
@@ -53,7 +53,7 @@ def main():
 
     graph, target, features = graphsage_data_reader(args.dataset_path, args.dataset_str)
 
-    clustering_machine = ClusteringMachine(args, graph, features, target, type_map)
+    clustering_machine = ClusteringMachine(args, graph, graph, features, target, type_map)
     clustering_machine.decompose()
 
     myGAT = ClusterGATTrainer(args, clustering_machine)
