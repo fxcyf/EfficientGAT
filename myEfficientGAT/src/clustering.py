@@ -72,20 +72,28 @@ class ClusteringMachine(object):
         self.sg_features = {}
         self.sg_targets = {}
         for cluster in self.clusters:
-            subgraph = self.graph.subgraph([node for node in sorted(self.graph.nodes()) if self.cluster_membership[node] == cluster])
+            subgraph = self.graph.subgraph(
+                [node for node in sorted(self.graph.nodes()) if self.cluster_membership[node] == cluster])
             self.sg_nodes[cluster] = [node for node in sorted(subgraph.nodes())]
             mapper = {node: i for i, node in enumerate(sorted(self.sg_nodes[cluster]))}
-            self.sg_train_nodes[cluster] = sorted([mapper[node] for node in self.sg_nodes[cluster] if self.type_map[node]=='train'])
-            self.sg_valid_nodes[cluster] = sorted([mapper[node] for node in self.sg_nodes[cluster] if self.type_map[node]=='valid'])
-            self.sg_test_nodes[cluster] = sorted([mapper[node] for node in self.sg_nodes[cluster] if self.type_map[node]=='test'])
-
             # mind in sg_edges[cluster], nodes id has been mapped to 0,1,2,3,...
-            # graph.edges() is unsymmetrical
-            self.sg_edges[cluster] = [[mapper[edge[0]], mapper[edge[1]]] for edge in subgraph.edges()] +  [[mapper[edge[1]], mapper[edge[0]]] for edge in subgraph.edges()]
-            # self.sg_train_nodes[cluster], self.sg_test_nodes[cluster] = train_test_split(list(mapper.values()), test_size = self.args.test_ratio)
-            # self.sg_train_nodes[cluster] = sorted([mapper[x] for x in self.sg_train_nodes[cluster]])
-            # self.sg_valid_nodes[cluster] = sorted([mapper[x] for x in self.sg_valid_nodes[cluster]])
-            # self.sg_test_nodes[cluster] = sorted([mapper[x] for x in self.sg_test_nodes[cluster]])
+            self.sg_edges[cluster] = [[mapper[edge[0]], mapper[edge[1]]] for edge in subgraph.edges()] + [
+                [mapper[edge[1]], mapper[edge[0]]] for edge in subgraph.edges()]
+            if self.type_map != None:
+                self.sg_train_nodes[cluster] = sorted(
+                    [mapper[node] for node in self.sg_nodes[cluster] if self.type_map[node] == 'train'])
+                self.sg_valid_nodes[cluster] = sorted(
+                    [mapper[node] for node in self.sg_nodes[cluster] if self.type_map[node] == 'valid'])
+                self.sg_test_nodes[cluster] = sorted(
+                    [mapper[node] for node in self.sg_nodes[cluster] if self.type_map[node] == 'test'])
+            else:
+                self.sg_train_nodes[cluster], self.sg_test_nodes[cluster] = train_test_split(
+                    list(mapper.values()), test_size=self.args.test_ratio)
+                self.sg_train_nodes[cluster], self.sg_valid_nodes[cluster] = train_test_split(
+                    self.sg_train_nodes[cluster], test_size=self.args.test_ratio)
+                self.sg_test_nodes[cluster] = sorted(self.sg_test_nodes[cluster])
+                self.sg_train_nodes[cluster] = sorted(self.sg_train_nodes[cluster])
+                self.sg_valid_nodes[cluster] = sorted(self.sg_valid_nodes[cluster])
 
             self.sg_features[cluster] = self.features[self.sg_nodes[cluster],:] # must sort and correspond
             self.sg_targets[cluster] = self.target[self.sg_nodes[cluster],:]

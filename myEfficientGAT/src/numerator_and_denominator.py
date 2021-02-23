@@ -29,20 +29,20 @@ class _NumIter(torch.autograd.Function):
 
         for start_index in range(0, qs.shape[0], _ITER_CHUNK_SIZE):
             end_index = min(qs.shape[0], start_index + _ITER_CHUNK_SIZE)
-            print('qs:',qs.shape,'\n','ks:',ks.shape,'\n','vs:',vs.shape)       ## print
+            # print('qs:',qs.shape,'\n','ks:',ks.shape,'\n','vs:',vs.shape)       ## print
             chunk = torch.einsum('sijk,sijl->sijkl', ks[start_index:end_index],
                                  vs[start_index:end_index])
-            print('chunk:',chunk.shape)     ## print
-            print('sums:',sums[None,Ellipsis].shape)    ## print
-            print('cumsum(chunk):',torch.cumsum(chunk,0).shape)     ## print
+            # print('chunk:',chunk.shape)     ## print
+            # print('sums:',sums[None,Ellipsis].shape)    ## print
+            # print('cumsum(chunk):',torch.cumsum(chunk,0).shape)     ## print
             chunk = sums[None, Ellipsis] + torch.cumsum(chunk, 0)
-            print('chunk:',chunk.shape)     ## print
-            print('qs:',qs[start_index:end_index].shape)        ## print
+            # print('chunk:',chunk.shape)     ## print
+            # print('qs:',qs[start_index:end_index].shape)        ## print
             sums = chunk[-1]
             result_elem = torch.einsum('sijkl,sijk->sijl', chunk,
                                        qs[start_index:end_index])
             result.append(result_elem)
-        print('ctx:',ctx)
+        # print('ctx:',ctx)
         result = torch.cat(result, 0)
         ctx.save_for_backward(qs, ks, vs, sums)
         return result, sums

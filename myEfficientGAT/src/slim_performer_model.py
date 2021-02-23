@@ -366,7 +366,7 @@ class MultiHeadAttention(torch.nn.Module):
     den = torch.transpose(den, 0, 1)
 
     outputs = num / (den[Ellipsis, None] + 1e-16)
-    outputs = outputs.reshape(x.shape[0],x._hidden_dim)
+    outputs = outputs.reshape(x.shape[0],self._hidden_dim)
 
     return outputs
 
@@ -434,17 +434,21 @@ class MultiHeadAttention(torch.nn.Module):
     return outputs, init_num_sums, init_den_sums, num_sums, den_sums
 
   def _get_queries_keys_values(self, inputs, rfs):
-    print('input:',inputs.shape)
+    # print('input:',inputs.shape)
     queries = self.q_map(inputs)
     keys = self.k_map(inputs)
     values = self.v_map(inputs)
-    print('queries:',queries.shape)
+    # print('queries:',queries.shape)
+    # queries = queries.reshape(
+    #   [queries.shape[0], queries.shape[1], self._n_heads, -1])
+    # keys = keys.reshape([keys.shape[0], keys.shape[1], self._n_heads, -1])
+    # values = values.reshape(
+    #   [values.shape[0], values.shape[1], self._n_heads, -1])
     queries = queries.reshape(
-      [queries.shape[0], queries.shape[1], self._n_heads, -1])
-    keys = keys.reshape([keys.shape[0], keys.shape[1], self._n_heads, -1])
+      [queries.shape[0], 1, self._n_heads, -1])
+    keys = keys.reshape([keys.shape[0], 1, self._n_heads, -1])
     values = values.reshape(
-      [values.shape[0], values.shape[1], self._n_heads, -1])
-
+      [values.shape[0], 1, self._n_heads, -1])
 
     if self._feature_type == 'relu':
       queries = torch.nn.functional.relu(queries)

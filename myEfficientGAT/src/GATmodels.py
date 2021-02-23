@@ -6,14 +6,14 @@ from slim_performer_model import MultiHeadAttention
 
 
 class GAT(nn.Module):
-    def __init__(self, feature_type, compute_type, nfeat, nhid, nclass, nheads):
+    def __init__(self, feature_type, compute_type, nfeat, nhid, nclass, nheads, dropout):
         """Dense version of GAT."""
         super(GAT, self).__init__()
         self.nheads = nheads
         self.nclass = nclass
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-        # self.dropout = dropout
+        self.dropout = dropout
         # self.attentions = [LinearAttention(nfeat, nhid, dropout=dropout, concat=True) for _ in range(nheads)]
         # self.attentions: [(N,nhid) * nheads]
         # for i, attention in enumerate(self.attentions):
@@ -39,7 +39,12 @@ class GAT(nn.Module):
         x = self.attention.full_forward(x,self.attention.sample_rfs(self.device))
         x = F.dropout(x, self.dropout, training=self.training)
         # temp = torch.zeros(x.shape[0],self.nclass).to(self.device)
-        x = torch.cat([out_att(x).unsqueeze(-1) for out_att in self.out_att],dim=2).sum(dim=2)
+        x = torch.cat([out_att.full_forward(x, out_att.sample_rfs(self.device)).unsqueeze(-1) for out_att in self.out_att],dim=2).sum(dim=2)
+        # x1 = {}
+        # for i in range(self.nheads):
+        #     x1[i] = self.out_att[i](x)
+        #     x1[i] = x1[i].unsqueeze(-1)
+        # x = torch.cat(x1,dim=2).sum(dim=2)
         x = x / self.nheads
         x = F.elu(x)    #?
         x = self.fn2(x)

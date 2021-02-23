@@ -31,10 +31,10 @@ def main():
     parser.add_argument("--dropout", type=float, default=0, help="Dropout parameter. Default is 0.5.")
     parser.add_argument("--learning-rate", type=float, default=0.002, help="Learning rate. Default is 0.01.")
     parser.add_argument("--test-ratio", type=float, default=0.1, help="Test data ratio. Default is 0.1.")
-    parser.add_argument("--cluster-number", type=int, default=100, help="Number of clusters extracted. Default is 10.")
-    parser.add_argument("--cluster-batch", type=int, default=1,
+    parser.add_argument("--cluster-number", type=int, default=500, help="Number of clusters extracted. Default is 10.")
+    parser.add_argument("--cluster-batch", type=int, default=5,
                         help="number of clusters to form a batch. Default is one")
-    parser.add_argument('--hidden', type=int, default=40, help='Number of hidden units.')
+    parser.add_argument('--hidden', type=int, default=8, help='Number of hidden units.')
     parser.add_argument('--nb_heads', type=int, default=4, help='Number of head attentions.')
     parser.add_argument('--patience', type=int, default=200, help='Patience')
     parser.add_argument('--feature_type', nargs="?", default='sqr',

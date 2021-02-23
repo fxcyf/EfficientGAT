@@ -29,11 +29,13 @@ class ClusterGATTrainer(object):
         #     """
         #     Creating a StackedGCN and transferring to CPU/GPU.
         #     """
-        self.model = GAT(args.feature_type, args.compute_type,
+        self.model = GAT(self.args.feature_type,
+                         self.args.compute_type,
                          self.clustering_machine.feature_count,
                          self.args.hidden,
                          self.clustering_machine.class_count,
-                         self.args.nb_heads)
+                         self.args.nb_heads,
+                         self.args.dropout)
         self.model = self.model.to(self.device)  # self.model.layers <-- torch.nn.Module + self define modules
 
     def do_forward_pass(self, epoch, clusters):
@@ -154,8 +156,8 @@ class ClusterGATTrainer(object):
                 clusters = self.clustering_machine.clusters[cluster_batch * i:cluster_batch * (i + 1)]
                 # print(clusters)
                 self.optimizer.zero_grad()  # set all parameters to zeros
-                batch_average_loss, node_count = self.do_forward_pass(epoch,
-                                                                      clusters)  # mind this, we may use more than one cluster
+                batch_average_loss, node_count = self.do_forward_pass(epoch, clusters)
+                # mind this, we may use more than one cluster
                 batch_average_loss.backward()
                 self.optimizer.step()
                 average_train_loss = self.update_average_loss(batch_average_loss, node_count)
@@ -203,6 +205,7 @@ class ClusterGATTrainer(object):
         self.predictions = np.concatenate(self.predictions).argmax(1)
         score = f1_score(self.targets, self.predictions, average="micro")
         acc = accuracy_score(self.targets, self.predictions)
+        print("Test F1: ", score)
         iso_date = datetime.now().isoformat().replace(':', '-')[:-7]
         np.savetxt('../results/ogbn_arxiv_results/targets-{}.txt'.format(iso_date), self.targets)
         np.savetxt('../results/ogbn_arxiv_results/predictions-{}.txt'.format(iso_date), self.predictions)
