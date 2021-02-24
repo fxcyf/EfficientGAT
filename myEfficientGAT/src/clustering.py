@@ -1,3 +1,4 @@
+import pymetis
 import metis
 import torch
 import random
@@ -5,13 +6,15 @@ import numpy as np
 import networkx as nx
 from sklearn.model_selection import train_test_split
 import scipy.sparse as sp
+import os
 
 
 class ClusteringMachine(object):
     """
     Clustering the graph, feature set and target.
     """
-    def __init__(self, args, graph, features, target, type_map=None):
+
+    def __init__(self, args, graph, adj, features, target, type_map=None):
         """
         :param args: Arguments object with parameters.
         :param graph: Networkx Graph.
@@ -20,6 +23,7 @@ class ClusteringMachine(object):
         """
         self.args = args
         self.graph = graph          # nx.Graph
+        self.adj = adj
         self.features = features    # coo_matrix
         self.target = target        # np.array
         self.type_map = type_map    # dict
@@ -30,7 +34,10 @@ class ClusteringMachine(object):
     #     Setting the feature and class count.
     #     """
         self.feature_count = self.features.shape[1]     # num of col
-        self.class_count = np.max(self.target)+1        # 1,2,... + 0
+        if not self.args.multilabel:
+            self.class_count = np.max(self.target) + 1  # 1,2,... + 0
+        else:
+            self.class_count = self.target.shape[1]
 
     def decompose(self):
         """
@@ -56,6 +63,16 @@ class ClusteringMachine(object):
         """
         Clustering the graph with Metis. For details see:
         """
+        if not os.path.exists(self.args.clustering_path + "clustering" + str(self.args.cluster_number) + ".npy"):
+            (st, parts) = pymetis.part_graph(self.args.cluster_number, self.adj)
+            # (st, parts) = metis.part_graph(self.graph, self.args.cluster_number)
+
+            parts = np.array(parts)
+            np.save(self.args.clustering_path + "clustering" + str(self.args.cluster_number) + ".npy", parts)
+        else:
+            print("Found exsiting clustering file\n")
+            parts = np.load(self.args.clustering_path + "clustering" + str(self.args.cluster_number) + ".npy")
+            parts.tolist()
         (st, parts) = metis.part_graph(self.graph, self.args.cluster_number)
         self.clusters = list(set(parts))
         self.cluster_membership = {node: membership for node, membership in enumerate(parts)}
@@ -109,4 +126,7 @@ class ClusteringMachine(object):
             self.sg_valid_nodes[cluster] = torch.LongTensor(self.sg_valid_nodes[cluster])
             self.sg_test_nodes[cluster] = torch.LongTensor(self.sg_test_nodes[cluster])
             self.sg_features[cluster] = torch.FloatTensor(self.sg_features[cluster]) # nNode * nFeature
-            self.sg_targets[cluster] = torch.LongTensor(self.sg_targets[cluster])   # nNode * 1
+            if not self.args.multilabel:
+                self.sg_targets[cluster] = torch.LongTensor(self.sg_targets[cluster])  # nNode * 1
+            else:
+                self.sg_targets[cluster] = torch.FloatTensor(self.sg_targets[cluster])  # nNode * 1
