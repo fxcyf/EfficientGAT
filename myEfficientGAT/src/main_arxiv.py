@@ -22,9 +22,12 @@ def main():
                         help="path to test.csv, train.csv,valid.csv.")
     # parser.add_argument("--features-path", nargs="?", default="../input/features.csv", help="Features json.")
     # parser.add_argument("--target-path", nargs="?", default="../input/target.csv", help="Target classes csv.")
-    parser.add_argument("--clustering-method", nargs="?", default="metis", help="Clustering method for graph "
-                                                                                "decomposition. Default is the metis "
-                                                                                "procedure.")
+    parser.add_argument("--multilabel", action='store_true', default=False, help="multi-label classification")     
+    parser.add_argument("--clustering-path", nargs="?", default="../input/ogbn_arxiv/clustering/", help="Clustering result npy")
+    parser.add_argument("--results-path", nargs="?", default="../results/ogbn_arxiv_results/", help="path to store results. ")
+    
+    parser.add_argument("--clustering-method", nargs="?", default="metis",
+                        help="Clustering method for graph decomposition. Default is the metis procedure.")
     parser.add_argument("--seed", type=int, default=1234209, help="Random seed for train-test split. Default is 42.")
     parser.add_argument('--no_cuda', action='store_true', default=False, help='Use CUDA training.')  # 无需带参数
     parser.add_argument("--epochs", type=int, default=10000, help="Number of training epochs. Default is 200.")
@@ -34,9 +37,11 @@ def main():
     parser.add_argument("--cluster-number", type=int, default=500, help="Number of clusters extracted. Default is 10.")
     parser.add_argument("--cluster-batch", type=int, default=5,
                         help="number of clusters to form a batch. Default is one")
+    
     parser.add_argument('--hidden', type=int, default=8, help='Number of hidden units.')
     parser.add_argument('--nb_heads', type=int, default=4, help='Number of head attentions.')
     parser.add_argument('--patience', type=int, default=200, help='Patience')
+    
     parser.add_argument('--feature_type', nargs="?", default='sqr',
                         help='Nonlinearity function for feature. Can be relu, elu+1, sqr, favor+, or favor+{int}.')
     parser.add_argument('--compute_type', nargs="?", default='iter',
@@ -59,7 +64,7 @@ def main():
     features = g.ndata['feat']  # coo_matrix(np.array(g.ndata['feat']))  # features = coo_matrix(...)
     target = np.array(target)  # target = np.array(size=(-1,1))
     type_map = type_reader(args.type_map_path)
-    clustering_machine = ClusteringMachine(args, graph, features, target, type_map)
+    clustering_machine = ClusteringMachine(args, graph, graph, features, target, type_map)
     clustering_machine.decompose()
 
     myGAT = ClusterGATTrainer(args, clustering_machine)
